@@ -1,5 +1,5 @@
 class Munchy
-  attr_reader :x, :y
+  attr_reader :x, :y, :fill
   attr_accessor :eaten
   
   def initialize x, y, unit
@@ -17,19 +17,20 @@ class Munchy
 end
 
 class Wigley
-  attr_reader :x, :y, :last_x, :last_y, :last_dir
+  attr_reader :x, :y, :last_x, :last_y, :last_dir, :last_fill
   UNIT = 10
   BEARING = {
     :x => { :right => UNIT, :up => 0, :left => -UNIT, :down => 0 },
     :y => { :right => 0, :up => -UNIT, :left => 0, :down => UNIT }
   }
   
-  def initialize x, y, dir
+  def initialize x, y, dir, fill = nil
     @x, @y, @u = x, y, UNIT
     @direction, @last_dir = dir, dir
     @last_x, @last_y = @x, @y
     @stroke = $app.red
-    @fill = "rgb(#{rand(200)}, #{rand(255)}, #{rand(255)})"
+    @fill = fill || "rgb(#{rand(200)}, #{rand(255)}, #{rand(255)})"
+    @last_fill = @fill
   end
   
   def get_step direction
@@ -51,19 +52,23 @@ class Wigley
   end
   
   def hit_something_in? game
-    hit_wall?(game) or hit_munchy?(game)
+    hit_wall?(game) or hit_wigley?(game)
   end
   
   def hit_wall? game
     @x > game.w - @u or @x < 0 or @y > game.h - @u or @y < 0
   end
   
-  def hit_munchy? game
-    game.wigleys.any? { |w| @x == w.x and @y == w.y unless w == self }
+  def hit_wigley? game
+    game.wigleys.any? { |w| (@x == w.x and @y == w.y) unless w == self }
   end
   
   def ate? m
-    m.eaten = true if @x == m.x && @y == m.y
+    if @x == m.x && @y == m.y
+      m.eaten = true
+      @last_fill = @fill
+      @fill = m.fill
+    end
   end
   
   def draw
@@ -106,7 +111,7 @@ class Snaykums
   def more_wigleys_and_munchies
     @munchies.reject! { |m| m.eaten }
     @munchies << Munchy.new(rand_grid(:x), rand_grid(:y), UNIT)
-    @wigleys << Wigley.new(@wigleys.last.last_x, @wigleys.last.last_y, @wigleys.last.last_dir)
+    @wigleys << Wigley.new(@wigleys.last.last_x, @wigleys.last.last_y, @wigleys.last.last_dir, @wigleys.last.last_fill)
     @score += 1
   end
   
@@ -169,9 +174,9 @@ Shoes.app :width => 400, :height => 400 do
     @playing = false if @wiggles.hit_something_in? @game
     
     unless @playing
-      #alert "LOSER!" if @paused
       @game.reset
       @playing, @paused = true, false
+      alert "LOSER!" if @paused
     end
   end
 end
