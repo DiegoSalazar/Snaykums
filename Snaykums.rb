@@ -17,7 +17,8 @@ class Munchy
 end
 
 class Wigley
-  attr_reader :x, :y, :last_x, :last_y, :last_dir, :last_fill
+  attr_reader :x, :y, :last_x, :last_y, :last_dir
+  attr_accessor :fill, :last_fill
   UNIT = 10
   BEARING = {
     :x => { :right => UNIT, :up => 0, :left => -UNIT, :down => 0 },
@@ -37,15 +38,11 @@ class Wigley
     [BEARING[:x][direction], BEARING[:y][direction]]
   end
   
-  def set_direction dir
-    @last_dir = @direction
-    @direction = dir
-  end
-  
   def move dir
-    set_direction dir
     pos = get_step dir
+    @last_dir = @direction
     @last_x, @last_y = @x, @y
+    @direction = dir
     @x += pos[0]
     @y += pos[1]
     draw
@@ -111,12 +108,22 @@ class Snaykums
   def more_wigleys_and_munchies
     @munchies.reject! { |m| m.eaten }
     @munchies << Munchy.new(rand_grid(:x), rand_grid(:y), UNIT)
-    @wigleys << Wigley.new(@wigleys.last.last_x, @wigleys.last.last_y, @wigleys.last.last_dir, @wigleys.last.last_fill)
+    @wigleys << Wigley.new(@wigleys.last.last_x, @wigleys.last.last_y, @wigleys.last.last_dir)
     @score += 1
+    update_wiggles_colors
+  end
+  
+  def update_wiggles_colors
+    @wiggles.each_with_index do |w, i|
+      next if i == 0
+      w.fill = @wiggles[i-1].last_fill
+      w.last_fill = w.fill
+    end
   end
   
   def draw
     $app.clear do
+      $app.background $app.lightgreen
       $app.para "Score: #{@score}"
       
       @wigleys.first.move @direction
@@ -130,12 +137,11 @@ class Snaykums
   end
 end
 
-Shoes.app :width => 400, :height => 400 do
+Shoes.app :title => 'Snaykums!', :width => 400, :height => 400 do
   $app = self
   
   @speed = 10
   @game = Snaykums.new
-  @wiggles = @game.wigleys.first
   @playing, @paused = true, false
   
   keypress do |key|
@@ -158,7 +164,6 @@ Shoes.app :width => 400, :height => 400 do
     else
       @game = Snaykums.new
       @game.direction = key
-      @wiggles = @game.wigleys.first
       @playing, @paused = true, false
     end
   end
