@@ -1,4 +1,4 @@
-= Snaykums for Shoes!
-My first attemp at writing a video game. Using the Shoes framework for ruby
+= Snake for Shoes!
+My first attempt at writing a game. Using the Shoes framework for ruby
 
 http://shoesrb.com/
