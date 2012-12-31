@@ -1,0 +1,4 @@
+# Snaykums for Shoes!
+My first attemp at writing a video game. Using the Shoes framework for ruby
+
+http://shoesrb.com/
